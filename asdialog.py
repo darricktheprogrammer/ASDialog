@@ -34,7 +34,7 @@ def add_widget(d, widget):
 
 	if widgetName == "buttons":
 		bList = widget.pop('buttons')
-		d.add_buttons(translate.list.to_python(bList), **widget)
+		d.add_buttons(bList, **widget)
 	elif widgetName == "checkbox":
 		label = widget.pop('label')
 		widget['checked'] = translate.bool.to_python(widget['checked'])
@@ -53,7 +53,7 @@ def add_widget(d, widget):
 
 def unpack_list_values(dict):
 	for k, v in dict.iteritems():
-		if "|" in v:
+		if len(v) > 0 and (v[0], v[-1]) == ("{", "}"):
 			dict[k] = translate.list.to_python(v)
 	return dict
 
