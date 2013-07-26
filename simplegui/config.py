@@ -1,5 +1,6 @@
 '''Configuration settings for simplegui'''
 
+# TODO: Will need updated with settings for other operating systems
 BG_COLOR = "#EDEDED"
 BG_SHADOW = "#888888"
 PADDING_TOP = 0
