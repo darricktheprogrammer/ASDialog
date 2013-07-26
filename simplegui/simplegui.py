@@ -4,8 +4,6 @@ import common
 import config
 import widgets
 
-#TODO: Change 'input' to 'textField'
-
 
 class Dialog():
 	def __init__(self, message, title=''):
@@ -17,7 +15,7 @@ class Dialog():
 		self._variables = []
 		self._widgets = []
 		self._labels = []
-		self._buttonsDefined = False
+		self._buttons = None
 		self._nextrow = 1
 		self._message = message
 		
@@ -29,39 +27,24 @@ class Dialog():
 	def display(self):
 		messagewidth = self._labelwidth + self._widgetwidth + (config.PADDING_CENTER * 2) + (config.PADDING_OUTER * 2)
 		
+		if self._buttons == None:
+			self.add_buttons()
+		self._pack_buttons()
 		self._add_message(self._message, messagewidth)
 		self._resize_widgets()
 		self._resize_labels()
-		if not self._buttonsDefined:
-			self.add_buttons(['Cancel', 'Ok'])
 		self._center_window(self._root)
 		self._root.mainloop()
 		return self._returnValues
 
-	def add_buttons(self, buttons, okButton=None, cancelButton=None):
-		self._buttonsDefined = True	
-		
-		if okButton == None:
-			okButton = buttons[-1]
 
-		if cancelButton is None and (len(buttons) > 1):
-			self._root.bind('<Command-.>', lambda event, cancel=buttons[-2]: self._get_values(cancel))
-
-
-		buttonFrame = widgets.StyledFrame(self._root)
-		buttonFrame.grid(row=self._nextrow, columnspan=2, sticky=tk.SE, pady=(config.PADDING_BOTTOM, config.PADDING_TOP))
-
-		for buttonName in reversed(buttons):
-			button = widgets.StyledButton(buttonFrame, text=buttonName)
-			button.configure(command=lambda bn=buttonName: self._get_values(bn))
-			if buttonName == okButton:
-				button.configure(default='active')
-			button.pack(side=tk.RIGHT)
-
-		self._root.bind('<Return>', lambda event, ok=okButton: self._get_values(ok))
-		self._root.bind('<KP_Enter>', lambda event, ok=okButton: self._get_values(ok))
-		if cancelButton is not None:
-			self._root.bind('<Command-.>', lambda event, cancel=cancelButton: self._get_values(cancel))
+	# This caches the button properties, but does not add them. Buttons are added
+	# at the end, during the display() method.
+	def add_buttons(self, buttons=['Cancel', 'Ok'], okButton='Ok', cancelButton='Cancel'):
+		self._buttons = {'buttons':      buttons,
+						 'okbutton':     okButton,
+						 'cancelbutton': cancelButton}
+			
 			
 	def add_checkbox(self, label='', checked=False):
 		checkboxVal = widgets.SimpleBooleanVar()
@@ -71,6 +54,7 @@ class Dialog():
 		chbx.configure(justify=tk.LEFT)
 		if checked:
 			chbx.select()
+
 
 	def add_dropdown(self, label='', values=[], defaultValue=''):
 		dropdownVal = common.get_value_variable(values)
@@ -82,6 +66,7 @@ class Dialog():
 		self._pack_widget(dropdown, labelText=label, fillColumn=True)
 		dropdownVal.set(defaultValue)
 		
+		
 	def add_text_field(self, label='', defaultValue=''):
 		fieldVal = tk.StringVar()
 		fieldVal.set(defaultValue)
@@ -89,10 +74,12 @@ class Dialog():
 		textField = widgets.StyledInput(self._root, textvariable=fieldVal)
 		self._pack_widget(textField, labelText=label, fillColumn=True)
 		
+		
 	def add_radio_buttons(self, choices=[], label='', defaultButton=''):
 		radioGroup = widgets.SimpleRadioGroup(self._root, buttons=choices, defaultButton=defaultButton)
 		self._variables.append(radioGroup)
 		self._pack_widget(radioGroup, labelText=label)
+		
 		
 	def add_separator(self, label=''):
 		separator = widgets.StyledFrame()
@@ -110,6 +97,7 @@ class Dialog():
 		win.resizable(0, 0)
 		return win
 
+
 	def _get_values(self, buttonClicked):
 		self._returnValues['button returned'] = buttonClicked
 		for var in self._variables:
@@ -118,6 +106,7 @@ class Dialog():
 			except ValueError:
 				self._returnValues['values'].append(None)
 		self._root.destroy()
+	
 	
 	def _pack_widget(self, widget, labelText='', fillColumn=False):
 		stickyType = tk.EW if fillColumn else tk.W
@@ -135,6 +124,28 @@ class Dialog():
 		self._labels.append(widgetLabel)
 		self._widgets.append(widget)
 		self._nextrow += 1
+		
+		
+	def _pack_buttons(self):
+		buttons = self._buttons['buttons']
+		okButton = self._buttons['okbutton']
+		cancelButton = self._buttons['cancelbutton']
+
+		buttonFrame = widgets.StyledFrame(self._root)
+		buttonFrame.grid(row=self._nextrow, columnspan=2, sticky=tk.SE, pady=(config.PADDING_BOTTOM, config.PADDING_TOP))
+
+		for buttonName in reversed(buttons):
+			button = widgets.StyledButton(buttonFrame, text=buttonName)
+			button.configure(command=lambda bn=buttonName: self._get_values(bn))
+			if buttonName == okButton:
+				button.configure(default='active')
+			button.pack(side=tk.RIGHT)
+
+		if okButton is not None and okButton in buttons:
+			self._root.bind('<Return>', lambda event, ok=okButton: self._get_values(ok))
+			self._root.bind('<KP_Enter>', lambda event, ok=okButton: self._get_values(ok))
+		if cancelButton is not None and cancelButton in buttons:
+			self._root.bind('<Command-.>', lambda event, cancel=cancelButton: self._get_values(cancel))
 		
 		
 	def _add_message(self, message, windowWidth):
@@ -155,11 +166,13 @@ class Dialog():
 		geom = (win.winfo_width(), win.winfo_height(), x, y)
 		win.geometry('{0}x{1}+{2}+{3}'.format(*geom))
 
+
 	def _resize_widgets(self):
 		for widget in self._widgets:
 			widget.configure(width=
 							self._widgetwidth / len(self._widgets) - self._widgetwidth / len(self._widgets)
 							)
+	
 	
 	def _resize_labels(self):
 		for label in self._labels:
