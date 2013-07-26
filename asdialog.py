@@ -53,7 +53,7 @@ def add_widget(d, widget):
 
 def unpack_list_values(dict):
 	for k, v in dict.iteritems():
-		if "|" in v:
+		if len(v) > 0 and (v[0], v[-1]) == ("{", "}"):
 			dict[k] = translate.list.to_python(v)
 	return dict
 
