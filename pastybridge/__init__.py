@@ -9,9 +9,9 @@ by the other language.
 For use with the AppleScript companion PYTranslate (http://github.com/pytranslate)
 '''
 
-import bool
-import date
-import dict
-import list
-import number
-import string
+from astranslate import bool
+from astranslate import date
+from astranslate import dict
+from astranslate import list
+from astranslate import number
+from astranslate import string
